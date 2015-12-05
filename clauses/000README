@@ -1,0 +1,27 @@
+These files contain the train and test data for for the three parts of 
+the CoNLL-2001 shared task:
+
+   testa1: development data part 1
+   testa2: development data part 2
+   testa2: development data part 3
+   testb1: test data part 1
+   testb2: test data part 2
+   testb3: test data part 3 (corrected version: 20030803)
+   testb3.org: test data part 3 (original version used in pre-2003 publications)
+   train1: train data part 1
+   train2: train data part 2
+   train3: train data part 3
+
+Relevant publication:
+
+   Erik F. Tjong Kim Sang and Hervi Dijean, Introduction to the CoNLL-2001
+   Shared Task: Clause Identification. In: Proceedings of CoNLL-2001,
+   Toulouse, France, 2001.
+
+Associated url: http://lcg-www.uia.ac.be/conll2001/clauses/
+
+Note: the original testb3 files contained duplicate clauses: (S(S words S)S).
+This data set has been replaced by a corrected version on August 3, 2003.
+All publications before 2003 refer to the original data sets and report
+recall and F1 measures which are lower than they should be.
+

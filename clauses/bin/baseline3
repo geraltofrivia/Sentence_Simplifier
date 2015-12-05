@@ -1,0 +1,37 @@
+#!/usr/bin/perl -w
+# baseline3: generate baseline result for CoNLL-2001 shared task 3
+# usage:     baseline3 < file
+# notes:     1. generates clause boundaries at sentence boundaries
+#            2. does not require training data
+# 20001215 erikt@uia.ua.ac.be
+
+use strict;
+
+my ($counter,$i,$line);
+
+$counter = 0;
+while (<STDIN>) {
+   $line = $_;
+   chomp($line);
+   if ($line !~ /^\s*$/) { $counter++; }
+   else {
+      if ($counter == 1) { print "(S*S)\n"; }
+      elsif ($counter > 1) {
+        print "(S*\n";
+        for ($i=1;$i<$counter-1;$i++) { print "*\n"; }
+        print "*S)\n";
+      }
+      print "\n";
+      $counter = 0;
+   }
+}
+if ($counter > 0) {
+  if ($counter == 1) { print "(S*S)\n"; }
+  elsif ($counter > 1) {
+     print "(S*\n";
+     for ($i=1;$i<$counter-1;$i++) { print "*\n"; }
+     print "*S)\n";
+   }
+   print "\n";
+}
+exit(0);

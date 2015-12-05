@@ -1,0 +1,137 @@
+#!/usr/bin/perl -w
+# conlleval3: evaluate results of third shared task of CoNLL-2001
+# usage:      conlleval3 < file
+# note:       expects two columns: correct tag and estimated tag
+#             separated by a space
+# 20001215 erikt@uia.ua.ac.be
+
+use strict;
+
+my ($c,$correct,$correctTags,$FB1,$line,$m,$missed,
+    $precision,$recall,$tokenNbr,$w,$wordNbr,$wrong,
+    @correctOpen,@correctPhrase,@resultOpen,@resultPhrase);
+
+$wordNbr = 0;
+$tokenNbr = 0;
+@correctOpen = ();
+@correctPhrase = ();
+@resultOpen = ();
+@resultPhrase = ();
+$correct = 0;
+$wrong = 0;
+$missed = 0;
+$correctTags = 0;
+while (<STDIN>) {
+   $line = $_;
+   chomp($line);
+   if ($line =~ /^\s*$/) {
+      if (@correctOpen or @resultOpen) { die "cannot happen\n"; }
+      ($c,$w,$m) = &countPhrases();
+      $correct += $c;
+      $wrong += $w;
+      $missed += $m;
+      @correctPhrase = ();
+      @resultPhrase = ();
+      $wordNbr = 0;
+   } else {
+      &process($line);
+      $wordNbr++;
+      $tokenNbr++;
+   }
+}
+if (@correctPhrase or @resultPhrase) {
+   if (@correctOpen or @resultOpen) { die "cannot happen\n"; }
+   ($c,$w,$m) = &countPhrases();
+   $correct += $c;
+   $wrong += $w;
+   $missed += $m;
+}
+
+$precision = 0;
+$recall = 0;
+$FB1 = 0;
+$precision = 100*$correct/($correct+$wrong) if ($correct+$wrong > 0);
+$recall = 100*$correct/($correct+$missed) if ($correct+$missed > 0);
+$FB1 = 2*$precision*$recall/($precision+$recall)
+   if ($precision+$recall > 0);
+
+printf "processed $tokenNbr tokens with %d phrases; ",$correct+$missed;
+printf "found: %d phrases; correct: %d.\n",$correct+$wrong,$correct;
+if ($tokenNbr>0) {
+   printf "accuracy: %6.2f%%; ",100*$correctTags/$tokenNbr;
+   printf "precision: %6.2f%%; ",$precision;
+   printf "recall: %6.2f%%; ",$recall;
+   printf "FB1: %6.2f\n",$FB1;
+}
+exit(0);
+
+sub process {
+   my ($close,$correct,$line,$open,$result,
+       @fields);
+
+   $line = shift(@_);
+   @fields = split(/\s+/,$line);
+   $result = pop(@fields);
+   $correct = pop(@fields);
+   if ($result eq $correct) { $correctTags++; }
+   ($open,$close) = &countBrackets($correct);
+   while ($open > 0) {
+      push(@correctOpen,($wordNbr));
+      $open--;
+   }
+   while ($close > 0) {
+      if (not @correctOpen) { die "unbalanced correct structure\n"; }
+      push(@correctPhrase,(pop(@correctOpen),$wordNbr));
+      $close--;
+   }
+   ($open,$close) = &countBrackets($result);
+   while ($open > 0) {
+      push(@resultOpen,($wordNbr));
+      $open--;
+   }
+   while ($close > 0) {
+      if (not @resultOpen) { die "unbalanced result structure\n"; }
+      push(@resultPhrase,(pop(@resultOpen),$wordNbr));
+      $close--;
+   }
+}
+
+sub countBrackets {
+   my ($close,$i,$line,$open,
+       @fields);
+
+   $line = shift(@_);
+   $open = 0;
+   $close = 0;
+   @fields =  split(/([\*\(\)])/,$line);
+   foreach $i (@fields) {
+      if ($i eq "(") { $open++; }
+      elsif ($i eq ")") { $close++; }
+   }
+   return(($open,$close));
+}
+
+sub countPhrases {
+   my ($c,$i,$j,$m,$w);
+   $i = 0;
+   $c = 0;
+   $w = 0;
+   $m = 0;
+   while ($i < $#correctPhrase) {
+      $j = 0;
+      while ($j < $#resultPhrase and
+             ($correctPhrase[$i] != $resultPhrase[$j] or
+              $correctPhrase[$i+1] != $resultPhrase[$j+1])) { $j += 2; }
+      if ($j < $#resultPhrase) {
+         $resultPhrase[$j] = $resultPhrase[$#resultPhrase-1];
+         $resultPhrase[$j+1] = $resultPhrase[$#resultPhrase];
+         pop(@resultPhrase);
+         pop(@resultPhrase);
+         $c++;
+      }
+      $i += 2;
+   }
+   $m = ($#correctPhrase+1) / 2 - $c;
+   $w = ($#resultPhrase+1) / 2;
+   return($c,$w,$m);
+}

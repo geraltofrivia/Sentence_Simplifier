@@ -1,0 +1,68 @@
+#!/usr/bin/perl -w
+# baseline3: generate baseline result for CoNLL-2001 shared task 2
+# usage:     baseline2 train test
+# note:      generates clause starts(ends) at sentence starts(ends)
+# 20001218 erikt@uia.ua.ac.be
+
+use strict;
+
+my ($class,$eSeen,$i,$line,$nbrOfFields,$sep,$sSeen,$testFile,$trainFile,
+    @fields,@result);
+
+$sep = " ";
+
+if ($#ARGV != 1) { die "usage: baseline2 train test\n"; }
+
+$trainFile = shift(@ARGV);
+$testFile = shift(@ARGV);
+
+# read and process training file
+open(INFILE,$trainFile) or die "cannot open $trainFile\n";
+while (<INFILE>) {
+   $line = $_;
+   chomp($line);
+   if ($line) {
+      @fields = split(/$sep/,$line);
+      if (not defined $nbrOfFields) { $nbrOfFields = $#fields; }
+      if ($nbrOfFields != $#fields) {
+         $nbrOfFields++;
+         die "error: expected $nbrOfFields fields in $line\n";
+      }
+      $class = pop(@fields);
+      if ($class eq "E") { $eSeen = 1; }
+      if ($class eq "S") { $sSeen = 1; }
+   }
+}
+close(INFILE);
+if (defined $eSeen and defined $sSeen) {
+   die "nonexpected encounter of both E and S: cannot happen\n"; 
+}
+
+@result = ();
+open(INFILE,$testFile) or die "cannot open $testFile\n";
+while (<INFILE>) {
+   $line = $_;
+   chomp($line);
+   if ($line !~ /^\s*$/) { 
+      push(@result,("$line${sep}X")); 
+      @fields = split(/$sep/,$line);
+      if ($nbrOfFields != $#fields) {
+         $nbrOfFields++;
+         die "error: expected $nbrOfFields fields in $line\n";
+      }
+   } else {
+      if (defined $eSeen) { $result[$#result] =~ s/${sep}.$/${sep}E/; }
+      elsif (defined $sSeen) { $result[0] =~ s/${sep}.$/${sep}S/;}
+      for ($i=0;$i<=$#result;$i++) { print "$result[$i]\n"; }
+      print "\n";
+      @result = ();
+   }
+}
+if ($#result >= 0) {
+   if (defined $eSeen) { $result[$#result] =~ s/${sep}.$/${sep}E/; }
+   elsif (defined $sSeen) { $result[0] =~ s/${sep}.$/${sep}S/;}
+   for ($i=0;$i<=$#result;$i++) { print "$result[$i]\n"; }
+   print "\n";
+}
+close(INFILE);
+exit(0);

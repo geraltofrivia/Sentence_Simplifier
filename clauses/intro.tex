@@ -1,0 +1,258 @@
+\documentstyle[colacl,11pt]{article}
+\titlebox=4.4cm
+\title{{\bf Introduction to the CoNLL-2001 Shared Task: \\
+            Clause Identification}}
+\author{
+Herv\'e D\'ejean            \\ Seminar f\"ur Sprachwissenschaft \\
+   Universit\"at T\"ubingen \\ \texttt{dejean@sfs.nphil.uni-tuebingen.de}
+\And
+Erik F. Tjong Kim Sang      \\ CNTS -- Language Technology Group \\
+   University of Antwerp    \\ \texttt{erikt@uia.ua.ac.be}
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+{
+\begin{picture}(0,0)
+\put(0,145){
+\makebox(440,0){
+Draft dated \today
+}}
+\end{picture}
+}
+
+\vspace*{-0.0cm}
+\begin{abstract}
+\noindent
+We describe the CoNLL-2001 shared task: dividing text into
+clauses.
+We give background information on the data sets, present a general
+overview of the systems that have taken part in the shared task and
+briefly discuss their performance.
+\end{abstract}
+
+\section{Introduction}
+
+%In the syntactic analysis of text, the boundaries of clauses are
+%useful information since the relations between the words inside a
+%clause can often be obtained independently of other words.
+The CoNLL-2001 shared task aims at discovering clause boundaries with
+machine learning methods.
+% ADD HERVE
+Why clauses? Clause is a structure used in applications such as Text-to-Speech \cite{ejerhed88},
+text-alignment \cite{papageorgiou97}, translation \cite{leffa98}.
+As wrote \cite{ejerhed88}, clause seems to be a natural structure above chunk:
+
+\begin{quote}
+It is a hypothesis of the author's current clause-by-clause processing theory,
+that a unit corresponding to the basic clause is a stable and easily recognizable surface unit and that
+is is also an important partial result and building block in the construction od a richer linguistic
+representation that encompasses syntax as well as semantics and discourse structure \cite[page 220]{ejerhed88}
+\end{quote}
+
+
+\section{Task description}
+\label{sec-task}
+
+%Clauses are word sequences which contain a subject and a predicate.
+%Clause is defined as a verb phrase (finite or not) and its complements.
+%ADD HERVE
+As mentioned in \cite{leffa98}, defining clause is not trivial. 
+In this task, the segmentation is provided by the Penn Treebank \cite{marcus93}.
+The guidelines of the Penn Treebank describes in detail how sentences are segmentated
+into clauses \cite{bies95}.
+Here is an example of a sentence and its clauses obtained from 
+Wall Street Journal section 15 of the Penn Treebank \cite{marcus93}:
+
+\vspace*{\baselineskip}
+\noindent
+(S Coach them in\\
+\hspace*{0.25cm}(S--NOM handling complaints)\\
+\hspace*{0.25cm}(SBAR--PRP so that\\
+\hspace*{0.50cm}(S they can resolve problems immediately)\\
+\hspace*{0.25cm})\\
+\hspace*{0.25cm}.\\
+)
+
+\vspace*{\baselineskip}
+\noindent
+The clauses of this sentence have been enclosed between brackets.
+A tag next to the open bracket denotes the type of the clause.
+
+In the CoNLL-2001 shared task, the goal is to identify clauses in
+text.
+Since clauses can be embedded in each other, this task is considerably
+more difficult than last year's task, recognizing non-embedded text
+chunks.
+For that reason, we have disregarded type and function information
+of the clauses: every clause has been tagged with S rather
+than with an elaborate tag such as SBAR--PRP.
+Furthermore, the shared task has been divided in three parts:
+identifying clause starts, recognizing clause ends and finding
+complete clauses.
+The results obtained for the first two parts can be used in the 
+third part of the task.
+
+\section{Data and Evaluation}
+
+This CoNLL shared task work with the same
+sections of the Penn Treebank as the widely used data set for 
+base noun phrase recognition \cite{ramshaw95}:
+WSJ sections 15--18 of the Penn Treebank as training material and 
+section 20 as test material\footnote{ 
+ These clause data sets are available at\\
+ http://lcg--www.uia.ac.be/conll2001/clauses/
+}.
+The data sets contain tokens (words and punctuation marks), information 
+about the location of sentence boundaries and information about clause
+boundaries. 
+Additionally, a part-of-speech (POS) tag and a chunk tag was assigned
+to each token by a standard POS tagger \cite{brill94} and a chunking
+program \cite{tks2000}. 
+We used these POS and chunking tags rather than the Treebank ones in
+order to make  sure that the performance rates obtained for this data
+are realistic estimates for data for which no treebank tags are
+available. 
+In the clause segmentation we have only included clauses in the
+Treebank which had a label starting with S thus disregarding
+clauses with label RRC or FRAG.
+All clause labels have been converted to S.
+
+Different schemes for encoding phrase information have been used in
+the data:
+
+\begin{itemize}
+\item B-X, I-X and O have been used for marking the first word in a
+   chunk of type X, a non-initial word in an X chunk and a word
+   outside of any chunk, respectively
+   (see also Tjong Kim Sang and Buchholz \shortcite{tks2000c}).
+\item S, E and X mark a clause start, a clause end and neither a 
+   clause start nor a clause end, respectively.
+   These tags have been used in the first and second part of the
+   shared task.
+\item (S*, *S) and * denote a clause start, a clause end and neither a 
+   clause start nor a clause end, respectively.
+   The first two can be used in combination with each other.
+   %For example, (S(S*S) mark a word where two clauses start and one
+   %ends.  POSSIBLE ??
+   % MODIF HERVE
+   For example, (S(S* mark a word where two clauses start.
+   These tags are used in the third part of the shared task.
+\end{itemize}
+
+\noindent
+The first two phrase encodings were inspired by the representation
+used by Ramshaw and Marcus \shortcite{ramshaw95}.
+Here is an example of the clause encoding schemes:
+
+\begin{center}
+\begin{tabular}{rlll}
+Coach&S&X&(S* \\
+them&X&X&* \\
+in&X&X&* \\
+handling&S&X&(S* \\
+complaints&X&E&*S) \\
+so&S&X&(S* \\
+that&X&X&* \\
+they&S&X&(S* \\
+can&X&X&* \\
+resolve&X&X&* \\
+problems&X&X&* \\
+immediately&X&E&*S)S)  \\
+.&X&E&*S)
+\end{tabular}
+\end{center}
+
+\noindent
+Three tags can be found next to each word, respectively denoting the
+information for the first, second and third part of the shared task.
+The goal of this task is to predict the test data segmentation as
+well as possible with a model built from the training data.
+
+The performance in this task is measured with three rates.
+First, the percentage of detected starts, ends or clauses 
+that are correct (precision). 
+Second, the percentage of starts, ends or clauses in the data that
+were found by the learner (recall).
+And third, the F$_{\beta=1}$ rate which is equal to
+($\beta^2$+1)*precision*recall / ($\beta^2$*precision+recall)
+with $\beta$=1
+\cite{vanrijsbergen75}.
+The latter rate has been used as the target for 
+optimization.
+%\footnote{In the literature about related tasks
+%sometimes the tagging accuracy is mentioned as well.
+%However, since the relation between tag accuracy and chunk 
+%precision and recall is not very strict, tagging accuracy is 
+%not a good evaluation measure for this task.}.
+
+\begin{table}[t]
+\begin{center}
+\begin{tabular}{|l|c|c|c|}\cline{2-4}
+\multicolumn{1}{l|}{part 1}
+                           & precision & recall & F$_{\beta=1}$ \\\hline
+baseline                   & 96.32\% & 38.08\% & 54.58\\\hline
+\end{tabular}
+
+\vspace*{0.5cm}
+\begin{tabular}{|l|c|c|c|}\cline{2-4}
+\multicolumn{1}{l|}{part 2}
+                           & precision & recall & F$_{\beta=1}$ \\\hline
+baseline                   & 96.32\% & 51.86\% & 67.42 \\\hline
+\end{tabular}
+
+\vspace*{0.5cm}
+\begin{tabular}{|l|c|c|c|}\cline{2-4}
+\multicolumn{1}{l|}{part 3}
+                           & precision & recall & F$_{\beta=1}$ \\\hline
+baseline                   & 96.32\% & 35.77\% & 52.17 \\\hline
+\end{tabular}
+\end{center}
+\caption{Baseline performances for the three parts of the shared task.
+The results have been obtained by a system that assumes that every
+sentence consists of one clause which contains the complete sentence.
+} 
+\label{tab-results}
+\end{table}
+
+\section{Results}
+
+We have derived baseline scores for the three parts of the shared task
+by evaluating a system that assigns one clause to every sentence.
+Each of these clauses completely covers a sentence.
+The baseline performances can be found in table \ref{tab-results}.
+(information about participating systems to be added when available)
+
+\section{Related Work}
+
+There have been some earlier studies in identifying clauses.
+Abney \shortcite{abney90} used a clause filter as a part of his CASS
+parser.
+It consists of two parts: one for recognizing basic clauses and one 
+for repairing difficult cases (clauses without subjects and clauses
+with additional VPs).
+Ejerhed \shortcite{ejerhed96} showed that a parser can benefit from
+automatically identified clause boundaries in discourse.
+
+\section{Concluding Remarks}
+
+(to be added when results are available)
+
+\section*{Acknowledgements}
+
+We would like to thank SIGNLL for giving us the opportunity to
+organize this shared task and our colleagues of
+the Seminar f\"ur Sprachwissenschaft in T\"ubingen,
+CNTS - Language Technology Group in Antwerp, and 
+the ILK group in Tilburg for valuable discussions and comments.
+This research has been funded by the European TMR network
+Learning Computational Grammars\footnote{http://lcg-www.uia.ac.be/}.
+
+\small
+\bibliographystyle{acl}
+\bibliography{intro}
+\end{document}

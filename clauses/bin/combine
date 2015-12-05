@@ -1,0 +1,90 @@
+#!/usr/bin/perl -w
+# combine: combine start and end tokens to complete phrases
+# usage:   combine < file
+# notes:   1. this is a baseline system; probably it can be improved
+#          2. it assumes S corresponds with the start of 1 phrase
+#          3. it assumes E corresponds with the end of 1 phrase
+#          4. E tags without a matching S tag are discarded
+#          5. non-matching S tags invoke extra E tags at (last word)-1
+#             presumed that there is an E tag at the last word
+# url:     http://lcg-www.uia.ac.be/conll2001/clauses/
+# 20001213 erikt@uia.ua.ac.be
+# 20010410 modified
+
+use strict;
+
+my ($line,$sep,
+    @end,@fields,@start);
+
+$sep = " ";
+@end = ();
+@start = ();
+while (<STDIN>) {
+   $line = $_;
+   chomp($line);
+   if ($line =~ /^\s*$/) {
+      &matchBrackets();
+      &printSentence();
+      @start = ();
+      @end = ();
+   } else {
+      @fields = split(/$sep/,$line);
+      if ($#fields != 1) { die "expected lines with two fields like: S X\n"; }
+      if ($fields[0] =~ /[^SXE]/ or $fields[1] =~ /[^SXE]/) { 
+         die "can only handle characters E, S and X\n";
+      }
+      push(@end,(0));
+      push(@start,(0));
+      if (pop(@fields) ne "X") { $end[$#end] = 1; }
+      if (pop(@fields) ne "X") { $start[$#start] = 1; }
+      $line = join("$sep",@fields);
+   }
+}
+if ($#start > 0) {
+   &matchBrackets();
+   &printSentence();
+}
+exit(0);
+
+sub matchBrackets {
+   my ($i,$j,$opened,$openSeen);
+
+   $opened = 0;
+   $openSeen = 0;
+   for ($i=0;$i<=$#start;$i++) {
+      $opened += $start[$i];
+      $openSeen += $start[$i];
+      if ($end[$i] > 0) {
+         if ($opened == 0) {
+            # ignore close bracket
+            $end[$i] = 0;
+         } elsif ($opened == 1 and $i != $#start) {
+            # don't close first open bracket prematurely
+            $end[$i] = 0;
+         } else {
+            # close one open bracket
+            $opened--;
+         }
+      }
+   }
+   if ($opened > 0 and $end[$#end] == 0) {
+      $end[$#end]++;
+      $opened--;
+   }
+   while ($opened > 0) {
+      $end[$#end-1]++;
+      $opened--;
+   }
+}
+
+sub printSentence {
+   my ($i,$j);
+
+   for ($i=0;$i<=$#start;$i++) {
+      for ($j=0;$j<$start[$i];$j++) { print "(S"; }
+      print "*";
+      for ($j=0;$j<$end[$i];$j++) { print "S)"; }
+      print "\n";
+   }
+   print "\n";
+}
