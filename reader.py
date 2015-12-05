@@ -22,6 +22,9 @@ class Reader:
                 sentence_words = []
                 sentence_tags = []
                 for token in sentence.split("\n"):
-                    sentence_words.append(token.split()[0])
-                    sentence_tags.append(token.split()[-1])
+                    token = token.split()
+                    if len(token) < 4:
+                        continue
+                    sentence_words.append(token[0])
+                    sentence_tags.append(token[-1])
                 yield sentence_words, sentence_tags

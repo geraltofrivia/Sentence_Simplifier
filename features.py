@@ -37,22 +37,22 @@ def feature_compiler(_word_index, _sentence):
 
     _cluster = _sentence[max(0,_word_index - 3) : (min(len(_sentence)-1,_word_index + 3))]
 
-    for token in _sentence:
-        print [str(token),token.pos_,token.dep_]
+    # for token in _sentence:
+    #     print [str(token),token.pos_,token.dep_]
 
     features = {}
     features["wordform"] = str(_word_token)                                        #Just the word. String
     features["wordpos"] = _word_token.pos_                                         #Pos tag of the word
-    features["clusterpos"] = [x.pos_ for x in _cluster]                            #Pos tag of the cluster
-    features["clusterlemma"] = [x.lemma_ for x in _cluster]                        #Lemma form of the cluster
+    features["worddep"] = _word_token.dep_                                         #Dependency of that word
+    features["clusterpos"] = ' '.join(x.pos_ for x in _cluster)                            #Pos tag of the cluster
+    #features["clusterlemma"] = [x.lemma_ for x in _cluster]                        #Lemma form of the cluster
     features["clusterpunct"] = 'PUNCT' in [ x.pos_ for x in _cluster]              #Boolean value True if punctuation in cluster. Else False
     features["distancefromroot"] = min([abs(_sentence.index(x) - _sentence.index(_word_token)) for x in _sentence if x.dep_ == u'ROOT'])         #Shortest Distance from a root to this word
     features["samewordneighbours"] = _word_index > 0 and _word_index < len(_sentence)-1 and str(_sentence[max(0,_word_index - 1)]) == str(_sentence[min(len(_sentence),_word_index + 1)])       #If the previous and the next word are the same
     features["sameposneighbours"] = _word_index > 0 and _word_index < len(_sentence)-1 and _sentence[max(0,_word_index - 1)].pos_ == _sentence[min(len(_sentence),_word_index + 1)].pos_       #If the previous and the next word are the same
-    features["clusterverb"] = u'VERB' in [x.dep_ for x in _cluster]                 #Whether you encounter a verb in the cluster
-    features["punctuationfreq"] = len([x for x in cluster if x.pos_ == u'PUNCT'])   #Number of punctuation in cluster
-    features["verbfreq"] = len([x for x in cluster if x.pos_ == u'VERB'])           #Number of verb in cluster
-    features["verbfreq"] = len([x for x in cluster if x.pos_ == u'VERB'])           #Number of verb in cluster
+    features["clusterverb"] = u'VERB' in [x.pos_ for x in _cluster]                 #Whether you encounter a verb in the cluster
+    features["punctuationfreq"] = len([x for x in _cluster if x.pos_ == u'PUNCT'])  #Number of punctuation in cluster
+    features["verbfreq"] = len([x for x in _cluster if x.pos_ == u'VERB'])          #Number of verb in cluster
 
 
 

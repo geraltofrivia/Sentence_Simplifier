@@ -1,6 +1,9 @@
 from nltk import MaxentClassifier
 from nltk import classify
 from spacy.en import English
+from pprint import pprint
+import pickle
+
 import features
 import reader
 
@@ -12,35 +15,41 @@ class Classifier:
         self.nlp = English(entity = False)
         self.featuresets = []
 
+        try:
+            f= open('maxent.pickle')
+            self.classifier = pickle.load(f)
+            f.close()
+        except IOError:
+            self.classifier = None
+
         print "Initialized correctly"
 
     def train(self):
-        for sentence,tags in datasource:
-            sentence_processed = nlp(u' '.join(sentence))
+        for sentence,tags in self.datasource:
+            sentence_processed = self.nlp(u' '.join(sentence))
             for token in range(len(sentence)):
                 self.featuresets.append((features.feature_compiler(token,sentence_processed),tags[token]))
 
-        train_set, test_set = self.featuresets[0:-1000], self.featuresets[-1000,]
-        me3_megam_classifier = MaxentClassifier.train(train_set, "megam")
+        train_set, test_set = self.featuresets[0:-1000], self.featuresets[-1000:]
+        pprint(train_set[:10])
+        self.classifier = MaxentClassifier.train(train_set)
+
+        #Saving the classifier
+        self.save()
+
+    def classify(self,_string):
+        #Expects one sentence as a string
+        _string =  unicode(_string)
+        _string_processed = self.nlp(_string)
+        tags = []
+        for index in range(len(_string_processed)):
+            featureset = features.feature_compiler(index,_string_processed)
+            tags.append(self.classifier.classify(featureset))
+        return tags
+
+    def save(self):
+        file= open('maxent.pickle','wb')
+        pickle.dump(self.classifier, file)
+        file.close()
 
 
-
-# for document in datasource:
-#     document_id, processed_document = nlp(document)                         #Process the entire file as a single document.
-#     annotated_data = Reader.juxtapose(document_id,processed_document)       #Use the tags detected for the document.
-
-#     '''Annotated data is of this format:
-#     [ document begins
-#         [   sentence begins
-#             (token,tag),(token,tag)
-#         ],
-#         [   sentence begins
-#             (token,tag),(token,tag)
-#         ]
-#     ]
-#     '''
-
-#     for sentence in annotated_data:
-#         sentence_ = [x[0] for x in sentence]
-#         for token in range(len(sentence)):
-#             featuresets.append((features.feature_compiler(token,sentence_),sentence[token][1]))
